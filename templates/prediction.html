@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forest Fire Prediction</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0d0d0d;
+            --surface: #161616;
+            --border: #2a2a2a;
+            --accent: #ff4d1c;
+            --accent-dim: rgba(255, 77, 28, 0.12);
+            --text: #f0ede8;
+            --muted: #666;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Mono', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            background-image: radial-gradient(ellipse at 20% 50%, rgba(255,77,28,0.05) 0%, transparent 60%);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 560px;
+        }
+
+        .header {
+            margin-bottom: 2.5rem;
+        }
+
+        .header .label {
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .header h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.4rem;
+            font-weight: 800;
+            line-height: 1.1;
+            color: var(--text);
+        }
+
+        .header h1 span { color: var(--accent); }
+
+        form {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 2rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .field.full { grid-column: 1 / -1; }
+
+        label {
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        input[type="text"] {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            color: var(--text);
+            font-family: 'DM Mono', monospace;
+            font-size: 0.9rem;
+            padding: 0.65rem 0.85rem;
+            transition: border-color 0.15s, background 0.15s;
+            outline: none;
+            width: 100%;
+        }
+
+        input[type="text"]::placeholder { color: #333; }
+
+        input[type="text"]:focus {
+            border-color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 1.5rem 0;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 0.9rem;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            font-family: 'Syne', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: opacity 0.15s, transform 0.1s;
+        }
+
+        .submit-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+        .submit-btn:active { transform: translateY(0); }
+
+        /* FWI Result Box */
+        .fwi-box {
+            margin-top: 1.25rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 1rem 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .fwi-box-left {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .fwi-box-label {
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .fwi-box-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .fwi-box-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: -0.02em;
+            min-width: 3rem;
+            text-align: right;
+            text-shadow: 0 0 18px rgba(255, 77, 28, 0.7), 0 0 40px rgba(255, 77, 28, 0.35);
+        }
+
+        .fwi-box-value.empty {
+            color: #2e2e2e;
+            text-shadow: none;
+        }
+
+        /* ── HISTORY TABLE ── */
+        .history-wrap {
+            width: 100%;
+            max-width: 1100px;
+            margin-top: 3rem;
+        }
+
+        .history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .history-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .history-label {
+            font-size: 0.65rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+
+        .history-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .clear-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-family: 'DM Mono', monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.4rem 0.9rem;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s;
+        }
+
+        .clear-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+            min-width: 900px;
+        }
+
+        thead tr {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-size: 0.62rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 400;
+            white-space: nowrap;
+        }
+
+        th.fwi-col {
+            color: var(--accent);
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: var(--surface); }
+
+        td {
+            padding: 0.7rem 1rem;
+            color: var(--text);
+            white-space: nowrap;
+        }
+
+        td.fwi-result {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            color: var(--accent);
+            text-shadow: 0 0 12px rgba(255, 77, 28, 0.5);
+        }
+
+        td.row-num {
+            color: var(--muted);
+            font-size: 0.7rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--muted);
+            font-size: 0.78rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            display: none;
+        }
+
+        .empty-state.visible { display: block; }
+
+        .new-row {
+            animation: rowSlideIn 0.4s ease forwards;
+        }
+
+        @keyframes rowSlideIn {
+            from { opacity: 0; transform: translateY(-6px); background: rgba(255,77,28,0.06); }
+            to   { opacity: 1; transform: translateY(0);    background: transparent; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PREDICTION FORM -->
+    <div class="container">
+        <div class="header">
+            <p class="label">ML Prediction Model</p>
+            <h1>Forest Fire<br><span>Risk Analysis</span></h1>
+        </div>
+
+        <form action="{{ url_for('predict_datapoint') }}" method="post" id="predict-form">
+            <div class="grid">
+
+                <div class="field">
+                    <label for="Temperature">Temperature</label>
+                    <input type="text" id="Temperature" name="Temperature" placeholder="e.g. 29" required />
+                </div>
+
+                <div class="field">
+                    <label for="RH">Relative Humidity (RH)</label>
+                    <input type="text" id="RH" name="RH" placeholder="e.g. 57" required />
+                </div>
+
+                <div class="field">
+                    <label for="Ws">Wind Speed (Ws)</label>
+                    <input type="text" id="Ws" name="Ws" placeholder="e.g. 18" required />
+                </div>
+
+                <div class="field">
+                    <label for="Rain">Rain</label>
+                    <input type="text" id="Rain" name="Rain" placeholder="e.g. 0" required />
+                </div>
+
+                <div class="field">
+                    <label for="FFMC">FFMC Index</label>
+                    <input type="text" id="FFMC" name="FFMC" placeholder="e.g. 65.7" required />
+                </div>
+
+                <div class="field">
+                    <label for="DMC">DMC Index</label>
+                    <input type="text" id="DMC" name="DMC" placeholder="e.g. 3.4" required />
+                </div>
+
+                <div class="field">
+                    <label for="ISI">ISI Index</label>
+                    <input type="text" id="ISI" name="ISI" placeholder="e.g. 1.3" required />
+                </div>
+
+                <div class="field">
+                    <label for="Classes">Fire Class</label>
+                    <input type="text" id="Classes" name="Classes" placeholder="0-Not fire/1-fire"required />
+                </div>
+
+                <div class="field full">
+                    <label for="Region">Region</label>
+                    <input type="text" id="Region" name="Region" placeholder="0-Bejaia/1-Sidi-Bel Abbes" required />
+                </div>
+
+            </div>
+
+            <div class="divider"></div>
+
+            <button type="submit" class="submit-btn">Run Prediction</button>
+
+            <!-- FWI Result Box -->
+            <div class="fwi-box">
+                <div class="fwi-box-left">
+                    <span class="fwi-box-label">Output</span>
+                    <span class="fwi-box-title">Fire Weather Index (FWI)</span>
+                </div>
+                <div class="fwi-box-value {% if results is not defined or results == None %}empty{% endif %}" id="fwi-value">
+                    {% if results is defined and results != None %}{{ results }}{% else %}—{% endif %}
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- HISTORY TABLE -->
+    <div class="history-wrap">
+        <div class="history-header">
+            <div class="history-title-group">
+                <span class="history-label">Session Log</span>
+                <span class="history-title">Prediction History</span>
+            </div>
+            <button class="clear-btn" onclick="clearHistory()">Clear All</button>
+        </div>
+
+        <div class="empty-state" id="empty-state">
+            No predictions yet. Run your first analysis above.
+        </div>
+
+        <div class="table-scroll" id="table-container">
+            <table id="history-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Time</th>
+                        <th>Temp (°C)</th>
+                        <th>RH (%)</th>
+                        <th>Wind (km/h)</th>
+                        <th>Rain</th>
+                        <th>FFMC</th>
+                        <th>DMC</th>
+                        <th>ISI</th>
+                        <th>Class</th>
+                        <th>Region</th>
+                        <th class="fwi-col">FWI</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Hidden Jinja values passed from Flask -->
+    <div id="flask-data"
+         data-result="{{ results if results is defined and results != None else '' }}"
+         data-temperature="{{ request.form.get('Temperature', '') }}"
+         data-rh="{{ request.form.get('RH', '') }}"
+         data-ws="{{ request.form.get('Ws', '') }}"
+         data-rain="{{ request.form.get('Rain', '') }}"
+         data-ffmc="{{ request.form.get('FFMC', '') }}"
+         data-dmc="{{ request.form.get('DMC', '') }}"
+         data-isi="{{ request.form.get('ISI', '') }}"
+         data-classes="{{ request.form.get('Classes', '') }}"
+         data-region="{{ request.form.get('Region', '') }}"
+         style="display:none;">
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'fwi_history';
+
+        function getHistory() {
+            try {
+                return JSON.parse(sessionStorage.getItem(STORAGE_KEY)) || [];
+            } catch { return []; }
+        }
+
+        function saveHistory(records) {
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+        }
+
+        function formatTime() {
+            const now = new Date();
+            return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        function renderTable(records, highlightFirst = false) {
+            const tbody = document.getElementById('history-body');
+            const emptyState = document.getElementById('empty-state');
+            const tableContainer = document.getElementById('table-container');
+
+            tbody.innerHTML = '';
+
+            if (records.length === 0) {
+                emptyState.classList.add('visible');
+                tableContainer.style.display = 'none';
+                return;
+            }
+
+            emptyState.classList.remove('visible');
+            tableContainer.style.display = 'block';
+
+            records.forEach((r, i) => {
+                const tr = document.createElement('tr');
+                if (highlightFirst && i === 0) tr.classList.add('new-row');
+
+                tr.innerHTML = `
+                    <td class="row-num">${records.length - i}</td>
+                    <td>${r.time}</td>
+                    <td>${r.temperature}</td>
+                    <td>${r.rh}</td>
+                    <td>${r.ws}</td>
+                    <td>${r.rain}</td>
+                    <td>${r.ffmc}</td>
+                    <td>${r.dmc}</td>
+                    <td>${r.isi}</td>
+                    <td>${r.classes}</td>
+                    <td>${r.region}</td>
+                    <td class="fwi-result">${r.fwi}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function clearHistory() {
+            sessionStorage.removeItem(STORAGE_KEY);
+            renderTable([]);
+        }
+
+        // On page load — check if Flask returned a result and add to history
+        window.addEventListener('DOMContentLoaded', () => {
+            const flask = document.getElementById('flask-data');
+            const result = flask.dataset.result;
+
+            let records = getHistory();
+
+            if (result !== '') {
+                const newRecord = {
+                    time:        formatTime(),
+                    temperature: flask.dataset.temperature,
+                    rh:          flask.dataset.rh,
+                    ws:          flask.dataset.ws,
+                    rain:        flask.dataset.rain,
+                    ffmc:        flask.dataset.ffmc,
+                    dmc:         flask.dataset.dmc,
+                    isi:         flask.dataset.isi,
+                    classes:     flask.dataset.classes,
+                    region:      flask.dataset.region,
+                    fwi:         result,
+                };
+
+                records.unshift(newRecord); // newest first
+                saveHistory(records);
+                renderTable(records, true);
+            } else {
+                renderTable(records, false);
+            }
+        });
+    </script>
+</body>
+</html>
