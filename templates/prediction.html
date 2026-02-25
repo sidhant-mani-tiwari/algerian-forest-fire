@@ -309,6 +309,20 @@
             from { opacity: 0; transform: translateY(-6px); background: rgba(255,77,28,0.06); }
             to   { opacity: 1; transform: translateY(0);    background: transparent; }
         }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.68rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            text-decoration: none;
+            margin-bottom: 1.5rem;
+            transition: color 0.2s;
+        }
+        .back-btn:hover { color: var(--accent); }
     </style>
 </head>
 <body>
@@ -316,6 +330,12 @@
     <!-- PREDICTION FORM -->
     <div class="container">
         <div class="header">
+            <a href="{{ url_for('index') }}" class="back-btn">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                    <path d="M13 8H3M7 4l-4 4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Back to Home
+            </a>
             <p class="label">ML Prediction Model</p>
             <h1>Forest Fire<br><span>Risk Analysis</span></h1>
         </div>
